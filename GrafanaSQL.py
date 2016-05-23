@@ -39,38 +39,46 @@ def query():
     print("epoch: %s" %(request.args.get('epoch')))
     print("query: %s" %(request.args.get('q')))
     sql = request.args.get('q')
-    str(sql).split("\n")
 
-    conn = db.engine.connect()  # get a mysql connection
+    conn = db.engine.connect()
 
     for query in sql.split("\n"):
-
+        print query
         series = []
         serie = {}
         values = []
 
         serie["name"] = "test"
         serie["columns"]= ["time","mean"]
+        if sql != "SHOW MEASUREMENTS":
+            timerange = re.search('timerange\(time.?..?(.*?)s and time.?..?(.*?)s.?,.?\'(.*?)\'\)', query).group(1,2,3)
+            if timerange:
+                t1 = time.strftime(timerange[2], time.gmtime(int(timerange[0])))
+                t2 = time.strftime(timerange[2], time.gmtime(int(timerange[1])))
+                query = query.replace("timerange(", "")
+                query = query.replace("%ss" % timerange[0], "'%s'" % t1)
+                query = re.sub("%ss.?,.?\'%s\'\)" % (timerange[1], timerange[2]), "'%s'" % t2, query)
 
-        timerange = re.search('timerange\(time.?..?(.*?)s and time.?..?(.*?)s.?,.?\'(.*?)\'\)', query).group(1,2,3)
-        if timerange:
-            t1 = time.strftime(timerange[2], time.gmtime(int(timerange[0])))
-            t2 = time.strftime(timerange[2], time.gmtime(int(timerange[1])))
-            query = query.replace("timerange(", "")
-            query = query.replace("%ss" % timerange[0], "'%s'" % t1)
-            query = re.sub("%ss.?,.?\'%s\'\)" % (timerange[1], timerange[2]), "'%s'" % t2, query)
+                rs = conn.execute(query).fetchall()
+                for r in rs:
+                    t = int(parse(r[0]).strftime('%s')) * 1000 if epoch == "ms" else int(parse(r[0]).strftime('%s'))
+                    values.append([t, r[1]])
 
-
-        rs = conn.execute(query).fetchall()
-        for r in rs:
-            t = int(parse(r[0]).strftime('%s')) * 1000 if epoch == "ms" else int(parse(r[0]).strftime('%s'))
-            values.append([t,r[1]])
+        elif sql == "SHOW MEASUREMENTS":
+            serie["columns"] = ["name"]
+            tables = db.engine.table_names()
+            values.append(tables)
+            
+        elif sql == "SHOW TAG KEYS FROM":
+            #TODO Show columns name
+            pass
 
         serie["values"] = values
         series.append(serie)
         results.append({"series": series})
 
     response = {"results":results}
+    print json.dumps(response)
     return json.dumps(response)
 
 if __name__ == "__main__":
