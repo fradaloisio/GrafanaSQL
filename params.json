@@ -1,0 +1,6 @@
+{
+  "name": "GrafanaSQL",
+  "tagline": "SQL for Grafana ... by mimicking InfluxDB",
+  "body": "# GrafanaSQL\r\nA InfluxDB mimic layer.\r\n\r\n## How it works?\r\nGrafanaSQL is written in python 2.7 using Flask and others libs.\r\nHe catch the requests, do it in SQL and reply with a json like InfluxDB.\r\n\r\n## Setup and Play\r\nDownload the master, install the dependecies \r\n * flask\r\n * flask_sqlalchemy\r\n \r\nRun GrafanaSQL `python2.7 GrafanaSQL.py`\r\n\r\nIn your Grafana data source add *InfluxDB 0.9.X*.\r\nGrafanaSQL server run on port 4000 (configurable for the next release)\r\n\r\nIn a new dashboard switch editor mode and paste the following query: <br>\r\n`select timestamp as time,value from measurements where measure == 'ot' AND timerange($timeFilter,'%Y-%m-%d %H:%M:%S')`\r\n\r\nEnjoy ...\r\n\r\n# Mandatory\r\n* Timestamp as a first field and renamed time\r\n* timerange($timeFilter, 'Timestamp format')\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
